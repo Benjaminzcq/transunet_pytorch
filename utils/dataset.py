@@ -16,16 +16,31 @@ class DentalDataset(Dataset):
 
         self.transform = transform
 
-        img_folder = os.path.join(path, 'img')
+        img_folder = os.path.join(path, 'images')
         mask_folder = os.path.join(path, 'mask')
 
         self.img_paths = []
         self.mask_paths = []
-        for p in os.listdir(img_folder):
-            name = p.split('.')[0]
+        for p, m in zip(os.listdir(img_folder), os.listdir(mask_folder)):
+            img_name = p.split('.')[0]
+            mask_name = m.split('.')[0]
 
-            self.img_paths.append(os.path.join(img_folder, name + '.jpg'))
-            self.mask_paths.append(os.path.join(mask_folder, name + '.bmp'))
+            # self.img_paths.append(os.path.join(img_folder, name + '.jpg'))
+            # self.mask_paths.append(os.path.join(mask_folder, name + '.bmp'))
+            img_extensions = ['.jpg', '.png', '.bmp', '.gif', '.tif', '.jpeg']
+            mask_extensions = ['.jpg', '.png', '.bmp', '.gif', '.tif', '.jpeg']
+            
+            for img_ext in img_extensions:
+                img_path = os.path.join(img_folder, img_name + img_ext)
+                if os.path.exists(img_path):
+                    self.img_paths.append(img_path)
+                    break
+                    
+            for mask_ext in mask_extensions:
+                mask_path = os.path.join(mask_folder, mask_name + mask_ext)
+                if os.path.exists(mask_path):
+                    self.mask_paths.append(mask_path)
+                    break
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -34,11 +49,26 @@ class DentalDataset(Dataset):
         img = self.img_paths[idx]
         mask = self.mask_paths[idx]
 
+        # 读取图像
         img = cv2.imread(img)
+        if img is None:
+            raise ValueError(f"无法读取图像: {img}")
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = cv2.resize(img, (self.output_size, self.output_size))
 
-        mask = cv2.imread(mask, 0)
+        # 检查掩码文件扩展名
+        if mask.lower().endswith('.gif'):
+            # 使用PIL读取GIF文件
+            from PIL import Image
+            mask_pil = Image.open(mask)
+            mask = np.array(mask_pil.convert('L'))  # 转换为灰度图并转为numpy数组
+        else:
+            # 使用OpenCV读取其他格式
+            mask = cv2.imread(mask, 0)
+            
+        if mask is None:
+            raise ValueError(f"无法读取掩码: {mask}")
+            
         mask = cv2.resize(mask, (self.output_size, self.output_size), interpolation=cv2.INTER_NEAREST)
         mask = np.expand_dims(mask, axis=-1)
 

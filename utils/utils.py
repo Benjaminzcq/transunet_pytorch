@@ -9,6 +9,22 @@ def thresh_func(mask, thresh=0.5):
     return mask
 
 
+def dice_coefficient(pred, target):
+    """
+    计算Dice系数 (F1 score)
+    
+    Args:
+        pred: 预测掩码 (numpy数组)
+        target: 真实掩码 (numpy数组)
+        
+    Returns:
+        float: Dice系数值 (0-1之间，越高越好)
+    """
+    smooth = 1e-5
+    intersection = np.sum(pred * target)
+    return (2. * intersection + smooth) / (np.sum(pred) + np.sum(target) + smooth)
+
+
 def dice_loss(pred, target):
     pred = torch.sigmoid(pred)
 

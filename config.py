@@ -1,7 +1,7 @@
 from easydict import EasyDict
 
 cfg = EasyDict()
-cfg.batch_size = 16
+cfg.batch_size = 4  # 减小批次大小以减少显存使用
 cfg.epoch = 200
 cfg.learning_rate = 1e-2
 cfg.momentum = 0.9
