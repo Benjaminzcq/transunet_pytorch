@@ -4,7 +4,6 @@ import torch
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
-import seaborn as sns
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from torch.utils.data import DataLoader
@@ -12,8 +11,8 @@ from torch.utils.data import DataLoader
 # 导入项目模块
 from utils.dataset import DentalDataset
 from utils.utils import thresh_func, dice_coefficient
-from train_swin_transunet import SwinTransUNetSeg
-from train_transunet import TransUNetSeg
+from model_swin_transunet import SwinTransUNetSeg
+from model_transunet import TransUNetSeg
 from config import cfg
 
 
@@ -178,9 +177,20 @@ class ModelEvaluator:
         cm = results['confusion_matrix']
         
         plt.figure(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                    xticklabels=['背景', '前景'], 
-                    yticklabels=['背景', '前景'])
+        im = plt.imshow(cm, interpolation='nearest', cmap='Blues')
+        plt.colorbar(im)
+        
+        # 添加数值标注
+        thresh = cm.max() / 2.
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                plt.text(j, i, format(cm[i, j], 'd'),
+                        ha="center", va="center",
+                        color="white" if cm[i, j] > thresh else "black")
+        
+        # 设置坐标轴标签
+        plt.xticks([0, 1], ['背景', '前景'])
+        plt.yticks([0, 1], ['背景', '前景'])
         plt.xlabel('预测标签')
         plt.ylabel('真实标签')
         plt.title(f'{model_name} 混淆矩阵')
@@ -259,9 +269,9 @@ class ModelEvaluator:
 
 def main():
     parser = argparse.ArgumentParser(description="医学图像分割模型评估")
-    parser.add_argument('--test_path', type=str, default="./DRIVE/test", help='测试数据集路径')
-    parser.add_argument('--transunet_model', type=str, default="./model_transunet.pth", help='TransUNet模型路径')
-    parser.add_argument('--swin_model', type=str, default="./model_swin_transunet.pth", help='Swin TransUNet模型路径')
+    parser.add_argument('--test_path', type=str, default="./DRIVE_PNG/test", help='测试数据集路径')
+    parser.add_argument('--transunet_model', type=str, default="./transunet_model.pth", help='TransUNet模型路径')
+    parser.add_argument('--swin_model', type=str, default="./swin_transunet_model.pth", help='Swin TransUNet模型路径')
     parser.add_argument('--output_dir', type=str, default="./evaluation_results", help='评估结果输出目录')
     args = parser.parse_args()
     

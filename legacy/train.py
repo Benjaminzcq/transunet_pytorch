@@ -10,7 +10,7 @@ from utils.utils import EpochCallback
 
 from config import cfg
 
-from train_transunet import TransUNetSeg
+from model_transunet import TransUNetSeg
 
 
 class TrainTestPipe:
